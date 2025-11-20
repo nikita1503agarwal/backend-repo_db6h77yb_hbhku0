@@ -1,48 +1,57 @@
 """
-Database Schemas
+Database Schemas for Mental Health App (IT Students)
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection (lowercased class name).
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List, Literal
+from datetime import datetime
 
-# Example schemas (replace with your own):
-
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
+# --- Users / Students ---
+class Student(BaseModel):
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: EmailStr = Field(..., description="Email address")
+    program: Optional[str] = Field(None, description="Program or major, e.g., CS, IT")
+    year: Optional[int] = Field(None, ge=1, le=10, description="Study year/semester index")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+# --- Educational resources ---
+class Resource(BaseModel):
+    title: str
+    description: str
+    url: str
+    category: Literal["article", "video", "guide", "helpline", "tool"] = "article"
 
-# Add your own schemas here:
-# --------------------------------------------------
+# --- Assessment definitions ---
+class Assessment(BaseModel):
+    key: Literal["phq9", "gad7"]
+    title: str
+    description: str
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class AssessmentResponse(BaseModel):
+    assessment_key: Literal["phq9", "gad7"]
+    answers: List[int] = Field(..., description="List of integer answers in order")
+    score: Optional[int] = None
+    severity: Optional[str] = None
+    student_email: Optional[EmailStr] = None
+
+# --- Mood entries for interactive tool ---
+class MoodEntry(BaseModel):
+    mood: Literal["great", "good", "okay", "low", "down"]
+    note: Optional[str] = None
+    student_email: Optional[EmailStr] = None
+    timestamp: Optional[datetime] = None
+
+# --- Contact messages ---
+class ContactMessage(BaseModel):
+    name: str
+    email: EmailStr
+    subject: str
+    message: str
+
+# --- Team member (static seed acceptable) ---
+class TeamMember(BaseModel):
+    name: str
+    role: str
+    bio: Optional[str] = None
+    avatar: Optional[str] = None
